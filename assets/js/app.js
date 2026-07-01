@@ -53,4 +53,45 @@ function buildKiosDropdowns() {
     document.getElementById('pos-kios-selector-group').innerHTML = html;
 }
 
-function logout() { sessionStorage.removeItem('pos_session'); location.reload(); }
+function logout() { sessionStorage.removeItem('pos_session'); location.reload();}
+
+
+// ... (kode-kode Anda yang ada di atas) ..
+// ==========================================
+// 👇 SILAKAN PASTE KODENYA MULAI DI SINI 👇
+// ==========================================
+let adminClickCount = 0;
+let adminClickTimeout;
+
+function triggerSuperAdmin() {
+    adminClickCount++;
+    
+    clearTimeout(adminClickTimeout);
+    adminClickTimeout = setTimeout(() => {
+        adminClickCount = 0;
+    }, 1500);
+
+    if (adminClickCount === 3) {
+        adminClickCount = 0; 
+        
+        document.getElementById('homepage-dashboard').style.display = 'none';
+        document.getElementById('super-admin-dashboard').style.display = 'block';
+        activeDashboard = 'super-admin-dashboard';
+        
+        if (typeof playAudioSuccess === 'function') playAudioSuccess();
+        
+        Swal.fire({
+            title: '👑 Pintu Rahasia Terbuka',
+            text: 'Masuk ke Mode Super Admin Panel!',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+}
+
+function keluarSuperAdmin() {
+    document.getElementById('super-admin-dashboard').style.display = 'none';
+    document.getElementById('homepage-dashboard').style.display = 'block';
+    activeDashboard = 'homepage-dashboard';
+}
