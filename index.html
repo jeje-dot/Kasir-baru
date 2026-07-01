@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - Professional Multi-Kios Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="receipt-print-area"></div>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="margin:0; font-size: 24px;">SECURITY LOGIN</h2>
+            <p style="font-size: 14px; color: #94a3b8; margin-bottom: 25px;">Masukkan PIN Otorisasi Kasir</p>
+            <input type="password" id="input-pin" placeholder="••••" style="width: 100%; text-align: center; font-size: 28px; letter-spacing: 6px; background: rgba(0,0,0,0.3); color: #fff;" onkeypress="if(event.key==='Enter') actionLogin()" autofocus>
+            <br><br>
+            <button onclick="actionLogin()" style="background: var(--success); width: 100%; padding: 14px;" id="btn-login">MASUK SISTEM</button>
+        </div>
+    </div>
+
+    <header id="main-header" style="display:none;">
+        <div>
+            <b id="header-app-name" style="font-size: 18px;">POS KUSNADI</b>
+            <span id="active-user-badge" class="badge" style="margin-left: 10px;">-</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span id="header-menu-title" style="color: #f1f5f9; font-weight: bold; font-size: 14px;"></span>
+            <button class="back-home-btn" onclick="backToDashboard()">🏠 Menu Utama</button>
+        </div>
+    </header>
+
+    <div class="container" id="homepage-dashboard">
+        <div class="welcome-banner">
+            <h1 id="app-main-title" class="clickable-title" onclick="triggerSuperAdmin()" style="margin: 0 0 5px 0; font-size: 28px;">Mesin Kasir KUSNADI</h1>
+            <p style="margin: 0; opacity: 0.9; font-size: 15px;" id="welcome-user-text">Sistem POS Multi-Kios Terintegrasi.</p>
+        </div>
+        <h3 style="color: var(--primary); margin-bottom: 15px;">MENU OPERASIONAL</h3>
+        <div class="menu-grid">
+            <div class="menu-card" onclick="showSection('pos', 'Mesin Kasir Utama')"><div class="menu-icon">🖥️</div><div class="menu-title">Mesin Kasir Pusat</div></div>
+            <div class="menu-card" onclick="showSection('card-management', 'Manajemen Kartu')"><div class="menu-icon">💳</div><div class="menu-title">Top Up & Kartu</div></div>
+            <div class="menu-card" onclick="showSection('opname', 'Stock Opname')"><div class="menu-icon">📋</div><div class="menu-title">Stock Opname Kios</div></div>
+            <div class="menu-card" id="owner-menu-stock" style="display: none;" onclick="showSection('stock', 'Manajemen Stok')"><div class="menu-icon">📦</div><div class="menu-title">Kelola Barang</div></div>
+            <div class="menu-card" id="owner-menu-sales" style="display: none;" onclick="showSection('sales', 'Laporan Omset')"><div class="menu-icon">📈</div><div class="menu-title">Laporan Omset</div></div>
+            <div class="menu-card" onclick="logout()"><div class="menu-icon">🚪</div><div class="menu-title" style="color: var(--danger);">Logout</div></div>
+        </div>
+    </div>
+
+    <div class="container" id="super-admin-dashboard">
+        <div class="welcome-banner" style="background: linear-gradient(135deg, #8e44ad 0%, #c0392b 100%);">
+            <h1 style="margin: 0 0 5px 0; font-size: 28px;">👑 SUPER ADMIN PANEL</h1>
+            <p style="margin: 0; opacity: 0.9; font-size: 15px;">Akses Tertinggi Pengelolaan Database, Laporan, & Pengaturan Sistem.</p>
+        </div>
+        <div class="menu-grid">
+            <div class="menu-card" onclick="showSection('kios-manager', 'Manajemen Tenant')"><div class="menu-icon">🏪</div><div class="menu-title">Manajemen Kios</div></div>
+            <div class="menu-card" onclick="showSection('karyawan-section', 'Akses Karyawan')"><div class="menu-icon">👥</div><div class="menu-title">Kelola Karyawan</div></div>
+            <div class="menu-card" onclick="showSection('struk-settings', 'Desain Struk')"><div class="menu-icon">🖨️</div><div class="menu-title">Desain Struk</div></div>
+            <div class="menu-card" onclick="showSection('toko-settings', 'Desain Toko')"><div class="menu-icon">🎨</div><div class="menu-title">Desain Toko</div></div>
+            <div class="menu-card" onclick="triggerRestoreDatabase()"><div class="menu-icon">♻️</div><div class="menu-title" style="color: var(--success);">Restore Database</div></div>
+            <div class="menu-card" onclick="keluarSuperAdmin()"><div class="menu-icon">🔒</div><div class="menu-title" style="color: var(--warning);">Tutup Admin Mode</div></div>
+        </div>
+        <input type="file" id="file-restore" accept=".json" style="display: none;" onchange="prosesRestoreDatabase(event)">
+    </div>
+
+    <div class="container" id="main-content" style="display:none;">
+        <div id="pos" class="section">
+            <div class="pos-layout">
+                <div class="pos-left">
+                    <div class="total-display">Rp <span id="grand-total">0</span></div>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <select id="tipe-pesanan" style="flex: 1;"><option value="Dine-in">🍽️ Dine-in</option><option value="Take-away">🥡 Take-away</option></select>
+                        <input type="text" id="nomor-meja" placeholder="Ketik No. Meja" style="flex: 1;">
+                    </div>
+                    
+                    <label>🎯 Pilih Kios Aktif:</label>
+                    <div class="kios-btn-group" id="pos-kios-selector-group"></div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="input-barcode" placeholder="Scan Barcode / ID Menu..." onkeypress="handleBarcode(event)" style="flex: 1; border: 2px solid var(--accent);">
+                        <button onclick="startNFCScan('pos')" style="background: var(--purple);">📟 NFC</button>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="cart-table">
+                            <thead><tr><th>Barang</th><th>Harga</th><th style="width:140px;">Qty</th><th>Subtotal</th><th>Aksi</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="simpanHoldOrder()" style="background: var(--secondary); flex: 1;">⏸️ Hold Pesanan</button>
+                        <button onclick="bukaHoldOrder()" style="background: var(--primary); flex: 1;">📋 Daftar Hold</button>
+                    </div>
+
+                    <div style="margin-top: 15px; background: #f8fafc; padding: 20px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <b>Uang Pembayaran:</b>
+                            <input type="number" id="input-bayar" placeholder="Rp 0" style="width: 220px; font-size: 20px; text-align: right; font-weight: bold;" onkeypress="if(event.key==='Enter') prosesPembayaran()">
+                        </div>
+                        <div class="quick-cash-group" style="margin-bottom: 15px;">
+                            <button class="quick-cash-btn" onclick="setUangPas()">Uang Pas</button>
+                            <button class="quick-cash-btn" onclick="tambahUang(20000)">+ 20K</button>
+                            <button class="quick-cash-btn" onclick="tambahUang(50000)">+ 50K</button>
+                            <button class="quick-cash-btn" onclick="tambahUang(100000)">+ 100K</button>
+                            <button class="quick-cash-btn" onclick="hitungSplitBill()" style="background:var(--warning); color:#000;">➗ Split Bill</button>
+                            <button class="quick-cash-btn" onclick="document.getElementById('input-bayar').value=''" style="background:var(--danger); color:white;">Clear</button>
+                        </div>
+                        <button onclick="prosesPembayaran()" style="background: var(--success); width: 100%; font-size: 18px; padding: 14px;">PROSES TUNAI (CASH)</button>
+                        <button onclick="bayarPakaiKartu()" style="background: var(--purple); width: 100%; font-size: 18px; padding: 14px; margin-top: 10px;">💳 TRANSAKSI TAP KARTU</button>
+                    </div>
+                </div>
+                <div class="pos-right">
+                    <div class="search-container">
+                        <input type="text" id="search-produk" placeholder="Cari nama barang..." oninput="liveSearch(this.value)" style="width: 100%;">
+                        <div id="search-results" class="search-results"></div>
+                    </div>
+                    <div style="margin-top: 10px; margin-bottom: 10px;">
+                        <select id="kategori-filter" onchange="renderQuickGrid()" style="width: 100%; border: 2px solid var(--accent); font-weight: bold;">
+                            <option value="ALL">📦 Semua Kategori</option>
+                            <option value="Makanan">🍛 Makanan</option>
+                            <option value="Minuman">🥤 Minuman</option>
+                            <option value="Cemilan">🍟 Cemilan</option>
+                        </select>
+                    </div>
+                    <div class="quick-grid" id="quick-product-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="stock" class="section">
+            <h2 style="color: var(--primary); margin-top:0;">Database Menu & Stok Barang</h2>
+            <div class="filter-panel">
+                <label>Pilih Kios:</label> <select id="stock-kios-filter" onchange="renderStok()"></select>
+            </div>
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                    <input type="text" id="new-barcode" placeholder="ID / SKU Menu">
+                    <input type="text" id="new-name" placeholder="Nama Item">
+                    <select id="new-kategori">
+                        <option value="Makanan">Makanan</option>
+                        <option value="Minuman">Minuman</option>
+                        <option value="Cemilan">Cemilan</option>
+                    </select>
+                    <input type="number" id="new-price" placeholder="Harga Jual">
+                    <input type="number" id="new-stock" placeholder="Stok Awal">
+                    <button onclick="tambahBarang()" style="background: var(--success);">Simpan</button>
+                </div>
+            </div>
+            <table id="stock-table"><thead><tr><th>ID</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <div id="card-management" class="section">
+            <h2>Sistem Top Up Kartu</h2>
+            <input type="text" id="topup-card-id" placeholder="ID Kartu"><button onclick="cekSaldoKartu()">Cek</button>
+            <div id="topup-info-box" style="display:none;"><span id="info-nama-pemilik"></span> <input type="number" id="topup-amount"><button onclick="eksekusiTopUp()">Top Up</button></div>
+            <table id="cards-table"><thead><tr><th>ID</th><th>Nama</th><th>Saldo</th></tr></thead><tbody></tbody></table>
+        </div>
+        
+        <div id="sales" class="section">
+            <h2>Laporan Omset</h2>
+            <h3 id="total-omset-wrapper">Total: Rp <span id="total-omset-display">0</span></h3>
+            <table id="sales-history-table"><thead><tr><th>Nota</th><th>Total</th></tr></thead><tbody></tbody></table>
+        </div>
+        
+        <div id="struk-settings" class="section">
+            <h2>Pengaturan Struk & Bluetooth</h2>
+            <div id="printer-config-list"></div>
+        </div>
+
+    </div>
+
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/hardware.js"></script>
+    <script src="assets/js/pos.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
